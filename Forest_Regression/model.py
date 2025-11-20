@@ -8,11 +8,19 @@ from Tree_Regression import MyTreeReg
 
 
 class MyForestReg:
-    def __init__(self, n_estimators: int = 10, max_features: float = 0.5,
-                 max_samples: float = 0.5, random_state: int = 42,
-                 max_depth: int = 5, min_samples_split: int = 2,
-                 max_leafs: int = 20, bins: int = 16, oob_score: str = None,
-                 multiprocess: bool = True):
+    def __init__(
+        self,
+        n_estimators: int = 10,
+        max_features: float = 0.5,
+        max_samples: float = 0.5,
+        random_state: int = 42,
+        max_depth: int = 5,
+        min_samples_split: int = 2,
+        max_leafs: int = 20,
+        bins: int = 16,
+        oob_score: str = None,
+        multiprocess: bool = True,
+    ):
         assert n_estimators > 0
         assert max_features > 0 and max_features <= 1
         assert max_samples > 0 and max_samples <= 1
@@ -21,8 +29,7 @@ class MyForestReg:
         assert min_samples_split > 0
         assert max_leafs > 0
         assert bins > 0
-        assert oob_score is None or oob_score in ['mae', 'mse', 'rmse',
-                                                  'mape', 'r2']
+        assert oob_score is None or oob_score in ["mae", "mse", "rmse", "mape", "r2"]
 
         self.n_estimators = n_estimators
         self.max_features = max_features
@@ -42,37 +49,39 @@ class MyForestReg:
         self.oob_score_ = None
 
     def __str__(self):
-        return f'MyForestReg class: n_estimators={self.n_estimators}, ' \
-               f'max_features={self.max_features}, ' \
-               f'max_samples={self.max_samples}, ' \
-               f'max_depth={self.max_depth}, ' \
-               f'min_samples_split={self.min_samples_split}, ' \
-               f'max_leafs={self.max_leafs}, ' \
-               f'bins={self.bins}, ' \
-               f'random_state={self.random_state}'
+        return (
+            f"MyForestReg class: n_estimators={self.n_estimators}, "
+            f"max_features={self.max_features}, "
+            f"max_samples={self.max_samples}, "
+            f"max_depth={self.max_depth}, "
+            f"min_samples_split={self.min_samples_split}, "
+            f"max_leafs={self.max_leafs}, "
+            f"bins={self.bins}, "
+            f"random_state={self.random_state}"
+        )
 
     def _get_score(self, y_pred: np.array, y_true: np.array) -> float:
         n_data = len(y_pred)
 
-        if self.oob_score == 'mae':
+        if self.oob_score == "mae":
             return np.sum(np.abs(y_true - y_pred)) / n_data
-        elif self.oob_score == 'mse':
+        elif self.oob_score == "mse":
             return np.sum((y_true - y_pred) ** 2) / n_data
-        elif self.oob_score == 'rmse':
+        elif self.oob_score == "rmse":
             return (np.sum((y_true - y_pred) ** 2) / n_data) ** 0.5
-        elif self.oob_score == 'mape':
+        elif self.oob_score == "mape":
             return 100 * np.sum(np.abs((y_true - y_pred) / y_true)) / n_data
-        elif self.oob_score == 'r2':
-            return 1 - np.sum((y_true - y_pred) ** 2) / \
-                   np.sum((y_true - np.mean(y_true)) ** 2)
+        elif self.oob_score == "r2":
+            return 1 - np.sum((y_true - y_pred) ** 2) / np.sum(
+                (y_true - np.mean(y_true)) ** 2
+            )
 
         return 0
 
     def _fit_tree(self, X, y) -> (MyTreeReg, int):
-        tree = MyTreeReg(self.max_depth,
-                         self.min_samples_split,
-                         self.max_leafs,
-                         self.bins)
+        tree = MyTreeReg(
+            self.max_depth, self.min_samples_split, self.max_leafs, self.bins
+        )
         tree.fit(X, y)
 
         return tree, len(y)
@@ -130,5 +139,4 @@ class MyForestReg:
         return self
 
     def predict(self, X: pd.DataFrame) -> np.array:
-        return sum([tree.predict(X) for tree in
-                    self._forest]) / self.n_estimators
+        return sum([tree.predict(X) for tree in self._forest]) / self.n_estimators

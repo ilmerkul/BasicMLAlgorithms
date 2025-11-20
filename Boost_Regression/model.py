@@ -5,9 +5,15 @@ from Tree_Regression import MyTreeReg
 
 
 class MyBoostReg:
-    def __init__(self, n_estimators: int = 10, learning_rate: float = 0.1,
-                 max_depth: int = 5, min_samples_split: int = 2,
-                 max_leafs: int = 20, bins: int = 16):
+    def __init__(
+        self,
+        n_estimators: int = 10,
+        learning_rate: float = 0.1,
+        max_depth: int = 5,
+        min_samples_split: int = 2,
+        max_leafs: int = 20,
+        bins: int = 16,
+    ):
         assert n_estimators > 0
         assert learning_rate > 0
 
@@ -22,11 +28,13 @@ class MyBoostReg:
         self.trees = None
 
     def __str__(self):
-        return f'MyBoostReg class: n_estimators={self.n_estimators}, ' \
-               f'learning_rate={self.learning_rate}, ' \
-               f'max_depth={self.max_depth}, ' \
-               f'min_samples_split={self.min_samples_split}, ' \
-               f'max_leafs={self.max_leafs}, bins={self.bins}'
+        return (
+            f"MyBoostReg class: n_estimators={self.n_estimators}, "
+            f"learning_rate={self.learning_rate}, "
+            f"max_depth={self.max_depth}, "
+            f"min_samples_split={self.min_samples_split}, "
+            f"max_leafs={self.max_leafs}, bins={self.bins}"
+        )
 
     def fit(self, X: pd.DataFrame, y: pd.Series):
         self.pred_0 = np.mean(y)
@@ -35,8 +43,9 @@ class MyBoostReg:
         y -= self.pred_0
 
         for i in range(self.n_estimators):
-            estimator = MyTreeReg(self.max_depth, self.min_samples_split,
-                                  self.max_leafs, self.bins).fit(X, y)
+            estimator = MyTreeReg(
+                self.max_depth, self.min_samples_split, self.max_leafs, self.bins
+            ).fit(X, y)
 
             self.trees.append(estimator)
             y -= self.learning_rate * estimator.predict(X)
@@ -45,4 +54,5 @@ class MyBoostReg:
 
     def predict(self, X: pd.DataFrame):
         return self.pred_0 + self.learning_rate * np.sum(
-            [tree.predict(X) for tree in self.trees], axis=0)
+            [tree.predict(X) for tree in self.trees], axis=0
+        )

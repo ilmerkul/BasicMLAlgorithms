@@ -7,20 +7,34 @@ import pandas as pd
 
 
 class MyLogReg:
-    def __init__(self, n_iter: int = 10, learning_rate: float | Callable = 0.1,
-                 metric: str = None, reg: str = None, l1_coef: float = 0,
-                 l2_coef: float = 0, sgd_sample: int | float = None,
-                 random_state: int = 42):
-        assert metric is None or metric in ['accuracy', 'precision',
-                                            'recall', 'f1', 'roc_auc']
-        assert reg is None or reg in ['l1', 'l2', 'elasticnet']
+    def __init__(
+        self,
+        n_iter: int = 10,
+        learning_rate: float | Callable = 0.1,
+        metric: str = None,
+        reg: str = None,
+        l1_coef: float = 0,
+        l2_coef: float = 0,
+        sgd_sample: int | float = None,
+        random_state: int = 42,
+    ):
+        assert metric is None or metric in [
+            "accuracy",
+            "precision",
+            "recall",
+            "f1",
+            "roc_auc",
+        ]
+        assert reg is None or reg in ["l1", "l2", "elasticnet"]
         assert l1_coef >= 0.0 and l1_coef <= 1.0
         assert l2_coef >= 0.0 and l2_coef <= 1.0
-        assert sgd_sample is None or \
-               type(sgd_sample) == int or \
-               type(sgd_sample) == float and \
-               sgd_sample >= 0.0 and \
-               sgd_sample <= 1.0
+        assert (
+            sgd_sample is None
+            or type(sgd_sample) == int
+            or type(sgd_sample) == float
+            and sgd_sample >= 0.0
+            and sgd_sample <= 1.0
+        )
 
         self.n_iter = n_iter
         self.learning_rate = learning_rate
@@ -33,20 +47,22 @@ class MyLogReg:
         self.random_state = random_state
 
     def __str__(self):
-        return f'MyLogReg class: n_iter={self.n_iter}, ' \
-               f'learning_rate={self.learning_rate}'
+        return (
+            f"MyLogReg class: n_iter={self.n_iter}, "
+            f"learning_rate={self.learning_rate}"
+        )
 
     def _get_accuracy(self, y_pred: np.array, y: np.array) -> float:
         return np.sum(((y_pred.T > 0.5) == y)) / len(y)
 
     def _get_precision(self, y_pred: np.array, y: np.array) -> float:
-        y_pred = (y_pred.T > 0.5)
+        y_pred = y_pred.T > 0.5
         TP = np.sum((y_pred == y) & (y == 1))
         FP = np.sum((y_pred != y) & (y == 0))
         return TP / (TP + FP)
 
     def _get_recall(self, y_pred: np.array, y: np.array) -> float:
-        y_pred = (y_pred.T > 0.5)
+        y_pred = y_pred.T > 0.5
         TP = np.sum((y_pred == y) & (y == 1))
         FN = np.sum((y_pred != y) & (y == 1))
         return TP / (TP + FN)
@@ -81,11 +97,13 @@ class MyLogReg:
 
     def _get_evaluate(self, X: np.array, y: np.array) -> float:
         y_pred = 1 / (1 + np.exp(-1 * np.dot(X, self.weights.T)))
-        evaluations = {'accuracy': self._get_accuracy,
-                       'precision': self._get_precision,
-                       'recall': self._get_recall,
-                       'f1': self._get_f1,
-                       'roc_auc': self._get_auc}
+        evaluations = {
+            "accuracy": self._get_accuracy,
+            "precision": self._get_precision,
+            "recall": self._get_recall,
+            "f1": self._get_f1,
+            "roc_auc": self._get_auc,
+        }
 
         return evaluations[self.metric](y_pred, y)
 
@@ -99,15 +117,13 @@ class MyLogReg:
             n = int(n_data * self.sgd_sample)
         sample_rows_idx = random.sample(range(n_data), n)
 
-        y_pred = 1 / (1 + np.exp(-1 * np.dot(X[sample_rows_idx, :],
-                                             self.weights.T)))
+        y_pred = 1 / (1 + np.exp(-1 * np.dot(X[sample_rows_idx, :], self.weights.T)))
 
         grad = (y_pred.T - y[sample_rows_idx]).dot(X[sample_rows_idx, :]) / n
-        if self.reg == 'l1' or self.reg == 'elasticnet':
-            l1 = np.array([1 if w > 0 else (-1 if w != 0 else 0)
-                           for w in self.weights])
+        if self.reg == "l1" or self.reg == "elasticnet":
+            l1 = np.array([1 if w > 0 else (-1 if w != 0 else 0) for w in self.weights])
             grad += self.l1_coef * l1
-        if self.reg == 'l2' or self.reg == 'elasticnet':
+        if self.reg == "l2" or self.reg == "elasticnet":
             grad += 2 * self.l2_coef * self.weights
 
         return grad
@@ -116,31 +132,37 @@ class MyLogReg:
         n_data = len(X)
 
         y_pred = 1 / (1 + np.exp(-1 * np.dot(X, self.weights.T)))
-        loss = -1 * (np.dot(y, np.log(y_pred + eps)) +
-                     np.dot(1 - y, np.log(1 - y_pred + eps))) / n_data
-        if self.reg == 'l1' or self.reg == 'elasticnet':
+        loss = (
+            -1
+            * (
+                np.dot(y, np.log(y_pred + eps))
+                + np.dot(1 - y, np.log(1 - y_pred + eps))
+            )
+            / n_data
+        )
+        if self.reg == "l1" or self.reg == "elasticnet":
             loss += self.l1_coef * np.sum(np.abs(self.weights[:-1]))
-        if self.reg == 'l2' or self.reg == 'elasticnet':
+        if self.reg == "l2" or self.reg == "elasticnet":
             loss += self.l2_coef * np.sum(self.weights[:-1] ** 2)
 
         return loss
 
-    def _print_train(self, X: np.array, y: np.array, i: int = 0,
-                     start: bool = False) -> NoReturn:
+    def _print_train(
+        self, X: np.array, y: np.array, i: int = 0, start: bool = False
+    ) -> NoReturn:
         loss = self._get_loss(X, y)
 
         step = str(i)
         if start:
-            step = 'start'
+            step = "start"
 
-        r = f'{step} | loss: {loss}'
+        r = f"{step} | loss: {loss}"
         if self.metric is not None:
             eval = self._get_evaluate(X, y)
-            r += f' | {self.metric}: {eval}'
+            r += f" | {self.metric}: {eval}"
         print(r)
 
-    def fit(self, X: pd.DataFrame, y: pd.Series,
-            verbose: int = False) -> NoReturn:
+    def fit(self, X: pd.DataFrame, y: pd.Series, verbose: int = False) -> NoReturn:
         random.seed(self.random_state)
         np.random.seed(self.random_state)
 
@@ -150,7 +172,7 @@ class MyLogReg:
         assert n_features > 0
         assert n_data > 1
 
-        X['bias_feature'] = 1
+        X["bias_feature"] = 1
         X = X.values
         y = y.values
 
@@ -176,7 +198,7 @@ class MyLogReg:
     def predict_proba(self, X: pd.DataFrame) -> np.array:
         assert len(self.weights) > 0
 
-        X['bias_feature'] = 1
+        X["bias_feature"] = 1
         X = X.values
 
         y_pred = 1 / (1 + np.exp(-1 * np.dot(X, self.weights.T)))
@@ -186,7 +208,7 @@ class MyLogReg:
     def predict(self, X: pd.DataFrame) -> np.array:
         assert len(self.weights) > 0
 
-        X['bias_feature'] = 1
+        X["bias_feature"] = 1
         X = X.values
 
         y_pred = 1 / (1 + np.exp(-1 * np.dot(X, self.weights.T)))
